@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expo Registration Kiosk</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .kiosk-container {
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+        .kiosk-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .kiosk-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .kiosk-header p {
+            color: var(--text-secondary);
+        }
+        .form-card {
+            position: relative;
+            overflow: hidden;
+        }
+        /* Success Badge Styles */
+        .badge-view {
+            display: none;
+            text-align: center;
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .ticket-pass {
+            background: linear-gradient(135deg, rgba(26, 23, 46, 0.9) 0%, rgba(13, 12, 22, 0.95) 100%);
+            border: 2px dashed rgba(139, 92, 246, 0.4);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .ticket-pass::before, .ticket-pass::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30px;
+            height: 30px;
+            background: var(--bg-dark);
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+        .ticket-pass::before { left: -16px; border-right: 1px solid var(--border-color); }
+        .ticket-pass::after { right: -16px; border-left: 1px solid var(--border-color); }
+        
+        .ticket-header {
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .ticket-logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        .ticket-title {
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        .ticket-body {
+            margin-bottom: 1.5rem;
+        }
+        .ticket-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+        .ticket-company {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        .ticket-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            text-align: left;
+            background: rgba(255,255,255,0.03);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 1.5rem;
+        }
+        .meta-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .meta-val {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ticket-qr {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 0.5rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .reset-ticker {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-actions">
+            <a href="index.html" class="back-btn">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                <span>Back</span>
+            </a>
+            <span style="color: var(--border-color)">|</span>
+            <span class="logo-text" style="font-size: 1.2rem; font-weight: 700;">Registration Kiosk</span>
+        </div>
+        <div class="lang-toggle">
+            <button id="lang-en" class="lang-btn active">EN</button>
+            <button id="lang-zh" class="lang-btn">中文</button>
+        </div>
+    </header>
+
+    <div class="container kiosk-container">
+        <!-- Form Kiosk Screen -->
+        <div id="kiosk-form-view">
+            <div class="kiosk-header">
+                <h1 class="gradient-text" data-i18n="reg_title">Expo Registration</h1>
+                <p data-i18n="reg_subtitle">Register for your entry pass below</p>
+            </div>
+
+            <div class="glass-card form-card">
+                <form id="registration-form" novalidate>
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-name" data-i18n="field_name">Full Name</label>
+                        <input type="text" id="reg-name" class="form-control" data-i18n="field_name" placeholder="Full Name" required>
+                    </div>
+
+                    <!-- Company -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-company" data-i18n="field_company">Company / Organization</label>
+                        <input type="text" id="reg-company" class="form-control" data-i18n="field_company" placeholder="Company / Organization" required>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-email" data-i18n="field_email">Email Address</label>
+                        <input type="email" id="reg-email" class="form-control" data-i18n="field_email" placeholder="Email Address" required>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-phone" data-i18n="field_phone">Phone Number</label>
+                        <input type="tel" id="reg-phone" class="form-control" data-i18n="field_phone" placeholder="Phone Number" required>
+                    </div>
+
+                    <!-- Sector (Adding Sector Dropdown) -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-sector" data-i18n="field_sector">Industry Sector</label>
+                        <select id="reg-sector" class="form-control" required>
+                            <!-- Dropdown options populated dynamically by JavaScript based on active language -->
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" data-i18n="btn_register">
+                        Submit Registration
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Success Ticket Screen -->
+        <div id="kiosk-success-view" class="badge-view">
+            <h1 style="color: var(--success); display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <svg width="32" height="32" fill="var(--success)" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span data-i18n="reg_success">Registration Successful!</span>
+            </h1>
+            <p data-i18n="reg_badge_sub">Present this pass at the gate for check-in</p>
+
+            <div class="ticket-pass">
+                <div class="ticket-header">
+                    <div class="ticket-logo gradient-text">ExpoLink</div>
+                    <div class="ticket-title">OFFICIAL PASS</div>
+                </div>
+                <div class="ticket-body">
+                    <div class="ticket-name" id="badge-name">John Doe</div>
+                    <div class="ticket-company" id="badge-company">Tech Solutions Inc.</div>
+                    
+                    <div class="ticket-meta">
+                        <div>
+                            <div class="meta-label" data-i18n="reg_badge_id">Pass ID</div>
+                            <div class="meta-val" id="badge-id">EXP-992384</div>
+                        </div>
+                        <div>
+                            <div class="meta-label" data-i18n="field_sector">Industry Sector</div>
+                            <div class="meta-val" id="badge-sector">Technology</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mock QR Code SVG -->
+                <div class="ticket-qr">
+                    <svg width="100" height="100" viewBox="0 0 100 100" fill="#000">
+                        <!-- Outer borders -->
+                        <path d="M 5,5 H 35 V 15 H 15 V 35 H 5 Z" />
+                        <path d="M 65,5 H 95 V 35 H 85 V 15 H 65 Z" />
+                        <path d="M 5,65 H 15 V 85 H 35 V 95 H 5 Z" />
+                        <!-- Position indicators -->
+                        <rect x="12" y="12" width="12" height="12" />
+                        <rect x="76" y="12" width="12" height="12" />
+                        <rect x="12" y="76" width="12" height="12" />
+                        <!-- Random QR blocks mock -->
+                        <rect x="40" y="15" width="8" height="8" />
+                        <rect x="52" y="8" width="8" height="8" />
+                        <rect x="44" y="32" width="12" height="6" />
+                        <rect x="15" y="48" width="8" height="8" />
+                        <rect x="32" y="48" width="16" height="8" />
+                        <rect x="52" y="44" width="8" height="16" />
+                        <rect x="72" y="48" width="16" height="8" />
+                        <rect x="68" y="68" width="8" height="16" />
+                        <rect x="80" y="80" width="8" height="8" />
+                        <rect x="44" y="68" width="12" height="12" />
+                        <rect x="32" y="84" width="8" height="8" />
+                    </svg>
+                </div>
+            </div>
+
+            <button id="new-reg-btn" class="btn btn-primary btn-secondary" data-i18n="reg_new_btn">
+                New Registration
+            </button>
+
+            <!-- Resets automatically -->
+            <div class="reset-ticker" id="reset-ticker-text">
+                This screen will reset in 5 seconds...
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/register.js"></script>
+</body>
+</html>
