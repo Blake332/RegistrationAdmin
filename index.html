@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expo Hub Launcher</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .hub-title {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        .hub-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        .hub-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+        .hub-card-header {
+            margin-bottom: 1.5rem;
+        }
+        .hub-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .icon-register { background: var(--grad-primary); box-shadow: 0 0 15px var(--primary-glow); }
+        .icon-desk { background: var(--grad-secondary); box-shadow: 0 0 15px var(--secondary-glow); }
+        .icon-directory { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .icon-display { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+        .icon-admin { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+
+        .hub-card svg {
+            fill: #fff;
+            width: 24px;
+            height: 24px;
+        }
+        .hub-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        .hub-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+        /* Stats Ribbon */
+        .stats-ribbon {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-val {
+            font-size: 2.2rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+        .stat-lbl {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            </div>
+            <span class="logo-text">ExpoLink</span>
+        </a>
+        <div class="lang-toggle">
+            <button id="lang-en" class="lang-btn active">EN</button>
+            <button id="lang-zh" class="lang-btn">中文</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="hub-title gradient-text" data-i18n="launcher_title">Expo Management Suite</h1>
+        <p class="hub-subtitle" data-i18n="launcher_subtitle">Unified real-time attendee and kiosk manager</p>
+
+        <!-- Dynamic stats ribbon (numbers stay Arabic digits) -->
+        <div class="glass-card stats-ribbon">
+            <div class="stat-item">
+                <div class="stat-val" id="stat-total">0</div>
+                <div class="stat-lbl" data-i18n="stats_total">Total Registrations</div>
+            </div>
+            <div style="width: 1px; background: var(--border-color);"></div>
+            <div class="stat-item">
+                <div class="stat-val" id="stat-checked" style="color: var(--secondary);">0</div>
+                <div class="stat-lbl" data-i18n="stats_checked">Checked In</div>
+            </div>
+            <div style="width: 1px; background: var(--border-color);"></div>
+            <div class="stat-item">
+                <div class="stat-val" id="stat-rate" style="color: var(--accent-pink);">0%</div>
+                <div class="stat-lbl" data-i18n="stats_rate">Check-In Rate</div>
+            </div>
+        </div>
+
+        <div class="hub-grid">
+            <!-- Registration Desk (Lookup & Dual Registration modes) -->
+            <div class="glass-card hub-card">
+                <div class="hub-card-header">
+                    <div class="hub-card-icon icon-desk">
+                        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    </div>
+                    <h3 data-i18n="desk_title">Registration & Check-In Desk</h3>
+                    <p data-i18n="desk_subtitle">Search early registrations or register new arrivals</p>
+                </div>
+                <a href="registration-desk.html" class="btn btn-primary" style="background: var(--grad-secondary); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);" data-i18n="launch">Launch</a>
+            </div>
+
+            <!-- Attendee Directory (Public Read-Only) -->
+            <div class="glass-card hub-card">
+                <div class="hub-card-header">
+                    <div class="hub-card-icon icon-directory">
+                        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+                    </div>
+                    <h3 data-i18n="dir_title">Attendee Directory</h3>
+                    <p data-i18n="dir_subtitle">List of registered participants (Read-Only)</p>
+                </div>
+                <a href="directory.html" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);" data-i18n="launch">Launch</a>
+            </div>
+
+            <!-- Self-Service Registration Kiosk -->
+            <div class="glass-card hub-card">
+                <div class="hub-card-header">
+                    <div class="hub-card-icon icon-register">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </div>
+                    <h3 data-i18n="kiosk_title">Registration Kiosk</h3>
+                    <p data-i18n="kiosk_desc">Self-service registration form for attendees.</p>
+                </div>
+                <a href="register.html" class="btn btn-primary" data-i18n="launch">Launch</a>
+            </div>
+
+            <!-- Big Screen Projection Display -->
+            <div class="glass-card hub-card">
+                <div class="hub-card-header">
+                    <div class="hub-card-icon icon-display">
+                        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+                    </div>
+                    <h3 data-i18n="display_title">Big Screen Display</h3>
+                    <p data-i18n="display_desc">Live countdown and real-time statistics.</p>
+                </div>
+                <a href="display.html" class="btn btn-primary" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);" data-i18n="launch">Launch</a>
+            </div>
+
+            <!-- Admin Console -->
+            <div class="glass-card hub-card">
+                <div class="hub-card-header">
+                    <div class="hub-card-icon icon-admin">
+                        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    </div>
+                    <h3 data-i18n="admin_title">General Admin</h3>
+                    <p data-i18n="admin_desc">Configure event details, manage records & utilities.</p>
+                </div>
+                <a href="admin.html" class="btn btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);" data-i18n="launch">Launch</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script>
+        function updateStats() {
+            const attendees = Storage.getAttendees();
+            const total = attendees.length;
+            const checked = attendees.filter(a => a.checkedIn).length;
+            const rate = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+            document.getElementById("stat-total").textContent = total;
+            document.getElementById("stat-checked").textContent = checked;
+            document.getElementById("stat-rate").textContent = rate + "%";
+        }
+
+        document.addEventListener("DOMContentLoaded", updateStats);
+        window.addEventListener("expo_db_update", updateStats);
+    </script>
+</body>
+</html>
