@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Admin Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Admin Lock screen overlays */
+        .lock-screen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #09090b;
+            background-image: radial-gradient(at 50% 50%, rgba(139, 92, 246, 0.2) 0px, transparent 50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .lock-card {
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            padding: 3rem 2rem;
+            animation: slideIn 0.3s ease forwards;
+        }
+        .lock-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(139, 92, 246, 0.15);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-glow);
+            box-shadow: 0 0 15px var(--border-glow);
+        }
+        .lock-icon svg {
+            fill: var(--primary);
+            width: 28px;
+            height: 28px;
+        }
+        
+        /* Dashboard content wraps */
+        #admin-dashboard-container {
+            display: none; /* Controlled by auth script */
+        }
+        
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media (min-width: 992px) {
+            .admin-layout {
+                grid-template-columns: 1fr 2fr;
+            }
+        }
+        .admin-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            padding: 1.25rem 1rem;
+            text-align: center;
+        }
+        .stat-box-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+            font-family: var(--font-heading);
+        }
+        .stat-box-lbl {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        /* Table styles */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .admin-table th, .admin-table td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .admin-table th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .admin-table tr:last-child td {
+            border-bottom: none;
+        }
+        .admin-table tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .admin-table .td-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* Modal dialog styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-content {
+            width: 90%;
+            max-width: 550px;
+            background: #110f1c;
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            overflow: hidden;
+            animation: modalSlide 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-close:hover {
+            color: #fff;
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            background: rgba(255,255,255,0.02);
+        }
+
+        @keyframes modalSlide {
+            from {
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Utilities buttons */
+        .util-btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Lock Screen Overlay -->
+    <div id="admin-lock-screen" class="lock-screen-overlay">
+        <div class="glass-card lock-card">
+            <div class="lock-icon">
+                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            </div>
+            <h2 style="margin-bottom: 0.5rem;" data-i18n="admin_lock_title">Admin Portal Locked</h2>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem;" data-i18n="admin_lock_subtitle">Enter admin password to unlock this page</p>
+            
+            <form id="admin-login-form">
+                <div class="form-group" style="text-align: left;">
+                    <label class="form-label" for="login-password" data-i18n="admin_password_label">Administrator Password</label>
+                    <input type="password" id="login-password" class="form-control" style="text-align: center; font-size: 1.25rem; letter-spacing: 0.1em;" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" data-i18n="btn_unlock">Unlock Dashboard</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Authenticated Dashboard Container -->
+    <div id="admin-dashboard-container">
+        <header>
+            <div class="nav-actions">
+                <a href="index.html" class="back-btn">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    <span>Back</span>
+                </a>
+                <span style="color: var(--border-color)">|</span>
+                <span class="logo-text" style="font-size: 1.2rem; font-weight: 700;" data-i18n="admin_dashboard">Admin Dashboard</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="lang-toggle">
+                    <button id="lang-en" class="lang-btn active">EN</button>
+                  
+                </div>
+                <button id="btn-admin-logout" class="btn btn-sm btn-danger" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger);" data-i18n="btn_logout">Logout</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Dashboard Core Metrics -->
+            <div class="stats-grid">
+                <div class="glass-card stat-box">
+                    <div class="stat-box-val" id="metric-total">0</div>
+                    <div class="stat-box-lbl" data-i18n="stats_total">Total Registrations</div>
+                </div>
+                <div class="glass-card stat-box" style="border-color: rgba(6, 182, 212, 0.2);">
+                    <div class="stat-box-val" id="metric-checked" style="color: var(--secondary);">0</div>
+                    <div class="stat-box-lbl" data-i18n="stats_checked">Checked In</div>
+                </div>
+                <div class="glass-card stat-box" style="border-color: rgba(236, 72, 153, 0.2);">
+                    <div class="stat-box-val" id="metric-rate" style="color: var(--accent-pink);">0%</div>
+                    <div class="stat-box-lbl" data-i18n="stats_rate">Check-In Rate</div>
+                </div>
+            </div>
+
+            <div class="admin-layout">
+                <!-- Sidebar: Controls -->
+                <div class="admin-sidebar">
+                    <!-- Settings Panel -->
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="20" height="20" fill="var(--primary)" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                            <span data-i18n="config_title">Countdown Settings</span>
+                        </h3>
+                        
+                        <form id="settings-form">
+                            <div class="form-group">
+                                <label class="form-label" for="settings-title" data-i18n="event_name">Event Title</label>
+                                <input type="text" id="settings-title" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="settings-date" data-i18n="target_date">Countdown Target Date/Time</label>
+                                <input type="datetime-local" id="settings-date" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;" data-i18n="btn_save_config">
+                                Save Configurations
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Password Security Panel -->
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="20" height="20" fill="var(--accent-pink)" viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6-5.1c1.71 0 3.1 1.39 3.1 3.1v2H8.9V6c0-1.71 1.39-3.1 3.1-3.1z"/></svg>
+                            <span data-i18n="change_pass_title">Security Settings</span>
+                        </h3>
+                        
+                        <form id="password-change-form">
+                            <div class="form-group">
+                                <label class="form-label" for="password-current" data-i18n="field_curr_pass">Current Password</label>
+                                <input type="password" id="password-current" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="password-new" data-i18n="field_new_pass">New Password</label>
+                                <input type="password" id="password-new" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; background: var(--grad-primary);" data-i18n="btn_update_pass">
+                                Change Password
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Utilities Panel -->
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="20" height="20" fill="var(--secondary)" viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+                            <span data-i18n="db_utilities">Database Utilities</span>
+                        </h3>
+
+                        <button id="btn-add-mock" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.75rem;" data-i18n="btn_mock">
+                            Add 10 Mock Attendees
+                        </button>
+                        
+                        <button id="btn-clear-db" class="btn btn-danger" style="width: 100%; margin-bottom: 1.5rem;" data-i18n="btn_clear">
+                            Clear All Database
+                        </button>
+
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                            <div class="util-btn-grid">
+                                <button id="btn-export-csv" class="btn btn-secondary btn-sm" data-i18n="btn_export">
+                                    Export to CSV
+                                </button>
+                                <div class="file-upload-wrapper">
+                                    <button class="btn btn-secondary btn-sm" style="width:100%" data-i18n="btn_import">
+                                        Import from JSON
+                                    </button>
+                                    <input type="file" id="import-json-file" class="file-upload-input" accept=".json">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Area: Database Table -->
+                <div class="glass-card" style="overflow: hidden; padding-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                        <h3 data-i18n="search_total">Registered Database</h3>
+                        <!-- Quick Table Search -->
+                        <input type="text" id="admin-search" class="form-control" style="width: 250px; font-size: 0.85rem; padding: 0.5rem 1rem;" data-i18n="search_placeholder" placeholder="Search by name, company, email, or phone...">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="table_name">Name</th>
+                                    <th data-i18n="table_company">Company</th>
+                                    <th data-i18n="table_sector">Sector</th>
+                                    <th data-i18n="table_email">Email</th>
+                                    <th data-i18n="table_phone">Phone</th>
+                                    <th data-i18n="table_status">Status</th>
+                                    <th data-i18n="table_actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-table-body">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal Dialog -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="edit_modal_title">Edit Attendee Details</h3>
+                <button class="modal-close" id="modal-close-x">&times;</button>
+            </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-name" data-i18n="field_name">Full Name</label>
+                        <input type="text" id="edit-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-company" data-i18n="field_company">Company / Organization</label>
+                        <input type="text" id="edit-company" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-email" data-i18n="field_email">Email Address</label>
+                        <input type="email" id="edit-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-phone" data-i18n="field_phone">Phone Number</label>
+                        <input type="tel" id="edit-phone" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-sector" data-i18n="field_sector">Industry Sector</label>
+                        <select id="edit-sector" class="form-control" required>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" id="modal-cancel-btn" data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
