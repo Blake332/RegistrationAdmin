@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Screen Display - Live Analytics Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #06050a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.2) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(236, 72, 153, 0.05) 0px, transparent 50%);
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dashboard-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            padding: 60px;
+            gap: 40px;
+        }
+
+        /* Left Side: Statistics Panel */
+        .stats-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff 0%, #8a2be2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .sync-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .main-stat-card {
+            background: linear-gradient(135deg, rgba(22, 20, 36, 0.7) 0%, rgba(12, 11, 20, 0.85) 100%);
+            border: 2px solid rgba(0, 212, 255, 0.25);
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 212, 255, 0.05);
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .main-stat-card h2 {
+            font-size: 1.4rem;
+            color: #a1a1aa;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .main-stat-number {
+            font-size: 9rem;
+            font-weight: 900;
+            color: #00d4ff;
+            text-shadow: 0 0 35px rgba(0, 212, 255, 0.6);
+            font-family: 'Courier New', monospace;
+            line-height: 1.1;
+        }
+
+        .stats-subgrid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .stat-subcard {
+            background: rgba(22, 20, 36, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-subcard h3 {
+            font-size: 1.1rem;
+            color: #a1a1aa;
+            font-weight: 500;
+        }
+
+        .stat-subnumber {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .daily-breakdown-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .daily-mini-card {
+            background: rgba(22, 20, 36, 0.55);
+            border: 1px solid rgba(138, 43, 226, 0.15);
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .daily-mini-card.active-day {
+            border-color: rgba(138, 43, 226, 0.4);
+            background: linear-gradient(180deg, rgba(22, 20, 36, 0.6) 0%, rgba(138, 43, 226, 0.05) 100%);
+        }
+
+        .daily-mini-card .day-lbl {
+            font-size: 0.85rem;
+            color: #8a2be2;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .daily-mini-card .day-val {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .daily-mini-card .day-date {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        /* Sector distribution removed for big-screen focused view */
+        @media (max-width: 1200px) {
+            .dashboard-layout {
+                flex-direction: column;
+                overflow-y: auto;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Left Side: Stats -->
+        <div class="stats-panel">
+            <div class="header">
+                <h1>Live Dashboard</h1>
+                <div class="sync-badge">
+                    <span>Live Database Sync</span>
+                </div>
+            </div>
+
+            <!-- Total Registry -->
+            <div class="main-stat-card">
+                <h2 data-i18n="stats_total">Total Registered</h2>
+                <div class="main-stat-number" id="total-count">0</div>
+            </div>
+
+            <!-- Average & Substats -->
+            <div class="stats-subgrid">
+                <div class="stat-subcard">
+                    <h3>Daily Average</h3>
+                    <div class="stat-subnumber" id="daily-avg">0</div>
+                </div>
+            </div>
+
+            <!-- Daily breakdown -->
+            <div class="daily-breakdown-row">
+                <div class="daily-mini-card" id="day-card-1">
+                    <div class="day-lbl">Day 1</div>
+                    <div class="day-val" id="day1-count">0</div>
+                    <div class="day-date">July 2</div>
+                </div>
+                <div class="daily-mini-card" id="day-card-2">
+                    <div class="day-lbl">Day 2</div>
+                    <div class="day-val" id="day2-count">0</div>
+                    <div class="day-date">July 3</div>
+                </div>
+                <div class="daily-mini-card" id="day-card-3">
+                    <div class="day-lbl">Day 3</div>
+                    <div class="day-val" id="day3-count">0</div>
+                    <div class="day-date">July 4</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side removed for big-screen display -->
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script>
+        const totalCountEl = document.getElementById('total-count');
+        const dailyAvgEl = document.getElementById('daily-avg');
+        const day1CountEl = document.getElementById('day1-count');
+        const day2CountEl = document.getElementById('day2-count');
+        const day3CountEl = document.getElementById('day3-count');
+
+        function updateDashboard() {
+            const attendees = Storage.getAttendees() || [];
+            const total = attendees.length;
+            const dailyAvg = total > 0 ? Math.round(total / 3) : 0;
+            const dayCounts = [0, 0, 0];
+
+            attendees.forEach(attendee => {
+                const regDate = attendee.registeredAt ? new Date(attendee.registeredAt) : null;
+                if (!regDate || Number.isNaN(regDate.getTime())) return;
+                const dayNum = regDate.getDate();
+                if (dayNum === 2) dayCounts[0]++;
+                else if (dayNum === 3) dayCounts[1]++;
+                else if (dayNum === 4) dayCounts[2]++;
+            });
+
+            const currentDayNum = new Date().getDate();
+            document.getElementById('day-card-1').classList.toggle('active-day', currentDayNum === 2);
+            document.getElementById('day-card-2').classList.toggle('active-day', currentDayNum === 3);
+            document.getElementById('day-card-3').classList.toggle('active-day', currentDayNum === 4);
+
+            totalCountEl.textContent = total;
+            dailyAvgEl.textContent = dailyAvg;
+            day1CountEl.textContent = dayCounts[0];
+            day2CountEl.textContent = dayCounts[1];
+            day3CountEl.textContent = dayCounts[2];
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Storage.translatePage();
+            updateDashboard();
+            setInterval(updateDashboard, 2000);
+            window.addEventListener('expo_db_update', updateDashboard);
+            window.addEventListener('expo_activity_update', updateDashboard);
+            window.addEventListener('expo_settings_update', () => {
+                Storage.translatePage();
+                updateDashboard();
+            });
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'expo_attendees' || event.key === 'expo_settings' || event.key === 'expo_activities') {
+                    updateDashboard();
+                }
+            });
+            window.addEventListener('focus', updateDashboard);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    updateDashboard();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+```
